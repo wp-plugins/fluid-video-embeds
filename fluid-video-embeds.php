@@ -20,7 +20,7 @@ class FluidVideoEmbed{
         $this->cache_duration = self::$cache_duration;
         
         // A few constants...
-        define( 'FVE_VERSION', '1.0.2' );
+        define( 'FVE_VERSION', '1.0.3' );
         // The directory the plugin resides in
         if( !defined( 'FVE_DIRNAME' ) ) define( 'FVE_DIRNAME', dirname( __FILE__ ) );
         
@@ -338,7 +338,10 @@ class FluidVideoEmbed{
                         $video_meta['thumbnail'] = 'http://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
                         $video_meta['full_image'] = 'http://img.youtube.com/vi/' . $video_id . '/0.jpg';
                         $video_meta['created_at'] = strtotime( $response_json->entry->published->{'$t'} );
-                        $video_meta['aspect'] = ( $response_json->entry->{'media$group'}->{'yt$aspectRatio'}->{'$t'} == 'widescreen' ) ? 'widescreen' : 'standard';
+						$video_meta['aspect'] = 'standard';
+						if( isset( $response_json->entry->{'media$group'}->{'yt$aspectRatio'} ) ) {
+	                        $video_meta['aspect'] = ( $response_json->entry->{'media$group'}->{'yt$aspectRatio'}->{'$t'} == 'widescreen' ) ? 'widescreen' : 'standard';
+						}
                         $video_meta['duration'] = $response_json->entry->{'media$group'}->{'yt$duration'}->{'seconds'};
                         
                         if( isset( $response_json->entry->author ) ) {
