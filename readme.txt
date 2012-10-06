@@ -20,9 +20,11 @@ See a live demo here: [Fluid Video Embeds Demo](http://jamie3d.com/fluid-video-e
 **Usage:** Install the plugin, activate it, then your YouTube and Vimeo embeds should start to ignore the setting in `Settings > Media > Maximum embed size`
 
 You can also use the `[fve]` shortcode:
+	
 	`[fve]http://www.youtube.com/watch?v=oHg5SJYRHA0[/fve]`
 
 If you want to use the Fluid Video Embeds method in a php template file in your theme, you can use the do_shortcode method:
+	
 	`<?php echo do_shortcode('[fve]http://www.youtube.com/watch?v=oHg5SJYRHA0[/fve]'); ?>`
 
 = How It Works =
