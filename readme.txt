@@ -21,11 +21,11 @@ See a live demo here: [Fluid Video Embeds Demo](http://jamie3d.com/fluid-video-e
 
 You can also use the `[fve]` shortcode:
 	
-	`[fve]http://www.youtube.com/watch?v=oHg5SJYRHA0[/fve]`
+	[fve]http://youtu.be/oHg5SJYRHA0[/fve]
 
 If you want to use the Fluid Video Embeds method in a php template file in your theme, you can use the do_shortcode method:
 	
-	`<?php echo do_shortcode('[fve]http://www.youtube.com/watch?v=oHg5SJYRHA0[/fve]'); ?>`
+	<?php echo do_shortcode('[fve]http://youtu.be/oHg5SJYRHA0[/fve]'); ?>
 
 = How It Works =
 The Fluid Video Embeds plugin aims to cleanly display YouTube and Vimeo videos while allowing them to be fluid(elastic/felxible) as well. The technique
