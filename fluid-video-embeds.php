@@ -4,7 +4,7 @@ Plugin Name: Fluid Video Embeds
 Plugin URI: http://wordpress.org/extend/plugins/fluid-video-embeds/
 Description: Makes your YouTube and Vimeo auto-embeds fluid/full width.
 Author: jamie3d
-Version: 1.2.5
+Version: 1.2.6
 Author URI: http://jamie3d.com
 */
 
@@ -391,15 +391,15 @@ class FluidVideoEmbed{
                         $wrapper_padding = '56.25%';
                     }
 
-                    $iframe_url = 'http://www.youtube.com/embed/' . $this->meta['id'] . '?wmode=transparent&modestbranding=1&autohide=1&showinfo=0&rel=0';
-                    $permalink = 'http://www.youtube.com/watch?v=' . $this->meta['id'];
+                    $iframe_url = '//www.youtube.com/embed/' . $this->meta['id'] . '?wmode=transparent&modestbranding=1&autohide=1&showinfo=0&rel=0';
+                    $permalink = '//www.youtube.com/watch?v=' . $this->meta['id'];
                     $thumbnail = isset( $this->meta['full_image'] ) ? $this->meta['full_image'] : '';
                     break;
                     case 'vimeo':
                     $wrapper_padding = ( $this->meta['aspect'] * 100 ) . '%';
 
-                    $iframe_url = 'http://player.vimeo.com/video/' . $this->meta['id'] . '?portrait=0&byline=0&title=0';
-                    $permalink = 'http://vimeo.com/' . $this->meta['id'];
+                    $iframe_url = '//player.vimeo.com/video/' . $this->meta['id'] . '?portrait=0&byline=0&title=0';
+                    $permalink = '//vimeo.com/' . $this->meta['id'];
                     $thumbnail = isset( $this->meta['full_image'] ) ? $this->meta['full_image'] : '';
                     break;
                 }
