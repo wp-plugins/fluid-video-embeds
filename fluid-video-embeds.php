@@ -4,7 +4,7 @@ Plugin Name: Fluid Video Embeds
 Plugin URI: http://wordpress.org/extend/plugins/fluid-video-embeds/
 Description: Makes your YouTube and Vimeo auto-embeds fluid/full width.
 Author: jamie3d
-Version: 1.2.6
+Version: 1.2.7
 Author URI: http://jamie3d.com
 */
 
@@ -33,6 +33,8 @@ class FluidVideoEmbed{
             'fve_alignment' => 'left',
             'fve_responsive_hyperlink' => false,
             'fve_force_youtube_16_9' => false,
+            'fve_force_vimeo_16_9' => false,
+            'fve_disable_css' => false,
             'fve_responsive_hyperlink_mq' => '@media screen and (max-device-width: 768px)',
             );
 
@@ -58,10 +60,20 @@ class FluidVideoEmbed{
             $this->fve_responsive_hyperlink_mq = $this->defaults['fve_responsive_hyperlink_mq'];
         }
 
-        // Autoload the Responsive Hyperlink options
+        // Autoload 16:9 options
         $this->fve_force_youtube_16_9 = (bool) $this->get_option( 'fve_force_youtube_16_9' );
         if ( empty( $this->fve_force_youtube_16_9 ) ) {
             $this->fve_force_youtube_16_9 = $this->defaults['fve_force_youtube_16_9'];
+        }
+        $this->fve_force_vimeo_16_9 = (bool) $this->get_option( 'fve_force_vimeo_16_9' );
+        if ( empty( $this->fve_force_vimeo_16_9 ) ) {
+            $this->fve_force_vimeo_16_9 = $this->defaults['fve_force_vimeo_16_9'];
+        }
+
+        // Autoload disable CSS option
+        $this->fve_disable_css = (bool) $this->get_option( 'fve_disable_css' );
+        if ( empty( $this->fve_disable_css ) ) {
+            $this->fve_disable_css = $this->defaults['fve_disable_css'];
         }
 
         $this->iframe_before_src = '<iframe src="';
@@ -82,7 +94,9 @@ class FluidVideoEmbed{
         add_filter('embed_oembed_html', array( &$this, 'filter_video_embed' ), 16, 3);
 
         // Add the Fluid Video Embeds Stylesheets
-        add_action('wp_head', array( &$this, 'add_head_css' ) );
+        if( !$this->fve_disable_css ) {
+            add_action('wp_head', array( &$this, 'add_head_css' ) );
+        }
 
         // Options page for configuration
         add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
@@ -111,6 +125,9 @@ class FluidVideoEmbed{
         // Add the default stylesheet to the editor
         add_action( 'after_setup_theme', array( &$this, 'add_editor_styles' ) );
 
+        // Admin 'Ajax' view for showing calculated CSS.
+        add_action( 'wp_ajax_fve_show_css', array( &$this, 'show_css' ) );
+
         // Add the fve shortcode
         add_shortcode( 'fve', array( &$this, 'shortcode' ) );
     }
@@ -132,6 +149,15 @@ class FluidVideoEmbed{
     function add_head_css() {
         echo '<!-- Start Fluid Video Embeds Style Tag -->' . "\n";
         echo '<style type="text/css">' . "\n";
+        $this->head_css();
+        echo '</style>' . "\n";
+        echo '<!-- End Fluid Video Embeds Style Tag -->' . "\n";
+    }
+
+    /**
+     * Echoes the generated CSS for the plugin
+     */
+    function head_css() {
         include( FLUID_VIDEO_EMBEDS_DIRNAME . '/stylesheets/main.css' );
 
         // Additional styles for maximum width
@@ -163,14 +189,12 @@ class FluidVideoEmbed{
             echo '    .fve-video-wrapper a.hyperlink-image { display: block; }' . "\n";
             echo '}' . "\n";
         }
-        echo '</style>' . "\n";
-        echo '<!-- End Fluid Video Embeds Style Tag -->' . "\n";
     }
 
     /**
      * Process update page form submissions
      *
-     * @uses RelatedServiceComments::sanitize()
+     * @uses self::sanitize()
      * @uses wp_redirect()
      * @uses wp_verify_nonce()
      */
@@ -404,10 +428,10 @@ class FluidVideoEmbed{
                     break;
                 }
 
-                ob_start( );
+                ob_start();
                 include( FLUID_VIDEO_EMBEDS_DIRNAME . '/views/elements/_iframe_embed.php' );
-                $output = ob_get_contents( );
-                ob_end_clean( );
+                $output = ob_get_contents();
+                ob_end_clean();
 
                 return $output;
             }
@@ -519,11 +543,11 @@ class FluidVideoEmbed{
 
         switch( $video_provider ){
             case 'youtube':
-            $thumbnail_url = 'http://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
+            $thumbnail_url = 'https://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
             break;
 
             case 'dailymotion':
-            $thumbnail_url = 'http://www.dailymotion.com/thumbnail/160x120/video/' . $video_id;
+            $thumbnail_url = 'https://www.dailymotion.com/thumbnail/160x120/video/' . $video_id;
             break;
 
             case 'vimeo':
@@ -535,7 +559,7 @@ class FluidVideoEmbed{
 
                 // if cache doesn't exist
             if( !$_thumbnail_url ){
-                $response = wp_remote_get( 'http://vimeo.com/api/v2/video/' . $video_id . '.json' );
+                $response = wp_remote_get( 'https://vimeo.com/api/v2/video/' . $video_id . '.json' );
                 if( !is_wp_error( $response ) ) {
                     $response_json = json_decode( $response['body'] );
                     $video = reset( $response_json );
@@ -629,7 +653,7 @@ class FluidVideoEmbed{
                 break;
 
                 case "vimeo":
-                    $url = 'http://vimeo.com/api/v2/video/' . $video_id . '.json';
+                    $url = 'https://vimeo.com/api/v2/video/' . $video_id . '.json';
                 break;
             }
 
@@ -651,9 +675,9 @@ class FluidVideoEmbed{
                     if( $response_json->pageInfo->totalResults == 0 ) break;
 
                     $video_meta['title'] = $response_json->items[0]->snippet->title;
-                    $video_meta['permalink'] = 'http://www.youtube.com/watch?v=' . $video_id;
+                    $video_meta['permalink'] = 'https://www.youtube.com/watch?v=' . $video_id;
                     $video_meta['description'] = $response_json->items[0]->snippet->title;
-                    $video_meta['thumbnail'] = 'http://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
+                    $video_meta['thumbnail'] = 'https://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
                     $video_meta['full_image'] = $this->get_youtube_max_thumbnail( $video_id );
                     $video_meta['created_at'] = strtotime( $response_json->items[0]->snippet->publishedAt );
                     $video_meta['aspect'] = 'widescreen';
@@ -669,14 +693,14 @@ class FluidVideoEmbed{
 
                     if( isset( $response_json->items[0]->snippet->channelTitle ) ) {
                         $video_meta['author_name'] = $response_json->items[0]->snippet->channelTitle;
-                        $video_meta['author_url'] = "http://www.youtube.com/channel/" . $response_json->items[0]->snippet->channelId;
+                        $video_meta['author_url'] = "https://www.youtube.com/channel/" . $response_json->items[0]->snippet->channelId;
                     }
                     break;
 
                     case 'vimeo':
                     $video = reset( $response_json );
                     $video_meta['title'] = $video->title;
-                    $video_meta['permalink'] = 'http://vimeo.com/' . $video_id;
+                    $video_meta['permalink'] = 'https://vimeo.com/' . $video_id;
                     $video_meta['description'] =  $video->description;
                     $video_meta['thumbnail'] = $video->thumbnail_medium;
                     $video_meta['full_image'] = $video->thumbnail_large;
@@ -685,6 +709,10 @@ class FluidVideoEmbed{
                     $video_meta['author_avatar'] = $video->user_portrait_small;
                     $video_meta['aspect'] = $video->height / $video->width;
                     $video_meta['duration'] = $video->duration;
+                    // Allow the widescreen option to be overriden
+                    if( $this->fve_force_vimeo_16_9 ) {
+                        $video_meta['aspect'] = 1080/1920; // 16:9
+                    }
                     break;
                 }
             }
@@ -709,7 +737,7 @@ class FluidVideoEmbed{
     function get_youtube_max_thumbnail( $video_id ) {
         if( $this->try_to_get_youtube_max_image ) {
             // The URL of the maximum resolution YouTube thumbnail
-            $max_res_url = 'http://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
+            $max_res_url = 'https://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
             $cache_key = $max_res_url . 'max_res_test';
             $cache_duration = 60 * 60 * 24 * 2; // Two days
 
@@ -734,7 +762,7 @@ class FluidVideoEmbed{
             }
         }
 
-        return 'http://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
+        return 'https://img.youtube.com/vi/' . $video_id . '/mqdefault.jpg';
     }
 
     /**
@@ -795,7 +823,7 @@ class FluidVideoEmbed{
      * This function will handling routing of form submissions to the appropriate
      * form processor.
      *
-     * @uses RelatedServiceComments::_admin_options_update()
+     * @uses self::_admin_options_update()
      */
     function route() {
         $uri = $_SERVER['REQUEST_URI'];
@@ -819,6 +847,18 @@ class FluidVideoEmbed{
                 // Nothing here yet...
             }
         }
+    }
+
+    /**
+     * Admin Ajax function to simply show the generated CSS
+     *
+     * @uses head_css()
+     * @uses wp_die()
+     */
+    function show_css() {
+        header('Content-Type: text/plain');
+        $this->head_css();
+        wp_die();
     }
 
     /**
